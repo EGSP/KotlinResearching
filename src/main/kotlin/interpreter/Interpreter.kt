@@ -11,7 +11,7 @@ class Interpreter {
             println("[line $line] Error$location: $message")
         }
 
-        fun error(interpreter: Interpreter,line:Int, message:String){
+        fun error(interpreter: Interpreter, line:Int, message:String){
             report(line,"",message)
             interpreter.errorMark = true
         }
@@ -52,5 +52,8 @@ class Interpreter {
             println(token.toString())
         }
         println("Interpretation end")
+
+        if(errorMark)
+            return;
     }
 }
