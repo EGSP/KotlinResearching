@@ -21,7 +21,6 @@ class Interpreter {
         when(args.isEmpty()){
             true -> goConsole()
             false -> goFile()
-            else -> return
         }
 
         errorMark = false
@@ -45,7 +44,7 @@ class Interpreter {
 
     private fun doInterpretation(text:String){
         println("Interpretation start")
-        val scanner = Scanner(text)
+        val scanner = Scanner(text,this)
         val tokens = scanner.scanTokens()
 
         for(token in tokens){
@@ -54,6 +53,6 @@ class Interpreter {
         println("Interpretation end")
 
         if(errorMark)
-            return;
+            return
     }
 }
