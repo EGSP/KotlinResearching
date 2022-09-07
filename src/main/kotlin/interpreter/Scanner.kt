@@ -2,10 +2,33 @@ package interpreter
 
 import interpreter.TokenType.*
 import java.util.*
-import kotlin.math.absoluteValue
 
 
 class Scanner(private val source:String, private val interpreter: Interpreter) {
+
+    companion object LanguageKeywords{
+        private var keywords: MutableMap<String, TokenType> = mutableMapOf()
+
+        init{
+            keywords["and"] = AND
+            keywords["class"] = CLASS
+            keywords["else"] = ELSE
+            keywords["false"] = FALSE
+            keywords["for"] = FOR
+            keywords["fun"] = FUN
+            keywords["if"] = IF
+            keywords["null"] = NULL
+            keywords["or"] = OR
+            keywords["print"] = PRINT
+            keywords["return"] = RETURN
+            keywords["super"] = SUPER
+            keywords["this"] = THIS
+            keywords["true"] = TRUE
+            keywords["var"] = VAR
+            keywords["while"] = WHILE
+        }
+    }
+
     private val tokens:MutableList<Token> = mutableListOf()
 
     private var entry:Int = 0
@@ -30,9 +53,8 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
     }
 
     private fun scanToken(){
-        val character = current
 
-        when (character) {
+        when (val character = current) {
             '(' -> addToken(LEFT_PAREN)
             ')' -> addToken(RIGHT_PAREN)
             '{' -> addToken(LEFT_BRACE)
@@ -83,6 +105,8 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
             else -> {
                 if(character.isDigit()){
                     addNumber()
+                }else if(isWord(character)){
+                    addIdentifier()
                 }else {
                     Interpreter.error(interpreter, line, "Unexpected character [$character]")
                 }
@@ -108,6 +132,14 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
         return true
     }
 
+    private fun isWord(char:Char):Boolean{
+        return char.isLetter() || char == '_'
+    }
+
+    private fun isWordOrDigit(char:Char):Boolean{
+        return isWord(char) || char.isDigit()
+    }
+
     private fun getPointedChar(): Char {
         return source[pointer]
     }
@@ -119,7 +151,6 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
     private fun getSubstring():String{
         return source.substring(entry,pointer)
     }
-
 
     private fun incrementLine() = line++
 
@@ -145,6 +176,10 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
             }
         }
         return false
+    }
+
+    private fun movePointerWhile(predicate: (char: Char) -> Boolean){
+        while(isExpectedChar(1,predicate)) movePointer()
     }
 
     // Добавляет токены в список токенов. Вместо null литерала передается используемый tokenType
@@ -194,5 +229,12 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
         }else{
             addToken(NUMBER, number)
         }
+    }
+
+    private fun addIdentifier(){
+        // Если следующий символ подходит.
+        movePointerWhile {char->isWordOrDigit(char)}
+        val word = getSubstring()
+        addToken(keywords[word]?:IDENTIFIER, word)
     }
 }
