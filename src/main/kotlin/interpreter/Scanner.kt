@@ -223,8 +223,7 @@ class Scanner(private val source:String, private val interpreter: Interpreter) {
         }
 
         val number = getSubstring().toFloatOrNull()
-        if(number == null)
-        {
+        if(number == null) {
             Interpreter.error(interpreter, line, "Cannot parse number.")
         }else{
             addToken(NUMBER, number)
