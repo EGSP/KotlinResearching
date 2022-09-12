@@ -1,14 +1,12 @@
 package tool
 
-import java.io.IOException
 import java.io.PrintWriter
-import java.util.*
 import kotlin.system.exitProcess
 
 
 fun main(args: Array<String>) {
     if (args.size != 1) {
-        System.err.println("Usage: generate_ast <output directory>")
+        System.err.println("Первым аргументом нужно указать выходную директорию")
         exitProcess(64)
     }
     val outputDir = args[0]
@@ -29,21 +27,27 @@ private fun defineAst(outputDir: String, baseName: String, types: List<String>){
     writer.println("import interpreter.Token")
     writer.println()
     writer.println("abstract class $baseName(){")
+    writer.println()
 
+    val typeNames = mutableListOf<String>()
     for(type in types){
         val typeData = type.split(":")
         val typeName = typeData[0].trim()
         val typeFields = typeData[1].trim()
 
+        typeNames.add(typeName)
         defineType(writer, baseName, typeName, typeFields)
     }
+
+    defineVisitor(writer, baseName, typeNames)
+
+    writer.println("    abstract fun <T> accept(visitor:Visitor<T>):T")
 
     writer.println("}")
     writer.close()
 }
 
 private fun defineType(writer:PrintWriter, baseName: String, typeName: String, typeFields:String){
-
     writer.print("class $typeName(")
     val fields = typeFields.split(",")
     for((index,field) in fields.withIndex()){
@@ -52,7 +56,23 @@ private fun defineType(writer:PrintWriter, baseName: String, typeName: String, t
         val fieldName = fieldData[1].trim()
 
         // В конец дописываем запятую, если есть ещё поля.
-        writer.print(" $fieldName:$fieldType" + if(index<fields.size-1) "," else "")
+        writer.print(" val $fieldName:$fieldType" + if(index<fields.size-1) "," else "")
     }
-    writer.println("):$baseName()")
+    writer.print("):$baseName()")
+
+    writer.println("{")
+    writer.println("    override fun <T> accept(visitor:Visitor<T>):T{")
+    writer.println("        return visitor.visit$typeName$baseName(this)")
+    writer.println("    }")
+    writer.println("}")
+}
+
+private fun defineVisitor(writer: PrintWriter, baseName: String, typeNames: List<String>){
+    writer.println()
+    writer.println("interface Visitor<T>{")
+
+    for(type in typeNames){
+        writer.println("    fun visit$type$baseName ( ${baseName.lowercase()}:$type ):T")
+    }
+    writer.println("}")
 }
