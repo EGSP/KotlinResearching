@@ -1,13 +1,31 @@
 package interpreter.ast
 
+import interpreter.Token
 import interpreter.TokenType
 import interpreter.expressions.Expression
 import interpreter.expressions.Expression.Visitor
 
 class AstPrinter: Visitor<String> {
+
+    companion object AstPrinterTest{
+        fun testAstPrinter(){
+            val expression: Expression = Expression.Binary(
+                Expression.Unary(
+                    Token(TokenType.MINUS, "-", TokenType.MINUS, 1),
+                    Expression.Literal(Token(TokenType.NUMBER,"123",123,0))
+                ),
+                Token(TokenType.STAR, "*", TokenType.STAR, 1),
+                Expression.Grouping(
+                    Expression.Literal(Token(TokenType.NUMBER,"45.67",45.67f,0))
+                )
+            )
+
+            println(AstPrinter().print(expression))
+        }
+    }
     fun print(expression: Expression) = expression.accept(this)
 
-    fun parentheses(name:String, vararg expressions: Expression):String {
+    private fun parentheses(name:String, vararg expressions: Expression):String {
         val builder = StringBuilder()
 
         // Проходимся по всем выражениям и рекурсивно печатаем их
@@ -41,4 +59,5 @@ class AstPrinter: Visitor<String> {
     override fun visitGroupingExpression(expression: Expression.Grouping): String {
         return parentheses("group", expression.groupedExpression)
     }
+
 }
